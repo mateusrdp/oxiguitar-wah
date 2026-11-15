@@ -1,0 +1,57 @@
+[package]
+name = "oxiguitar-wah-plugin"
+description = "The OxiGuitar wah-wah plugin: a wah pedal on any track, rocked by the score's wah marks."
+version = "0.0.0"
+edition = "2024"
+# Rust from rustup, raised only when something needs it (CONTRIBUTING.md).
+rust-version = "1.99"
+license = "GPL-3.0-or-later"
+authors = ["Mateus Rocha de Paula", "The OxiGuitar contributors"]
+repository = "https://github.com/mateusrdp/oxiguitar-wah"
+homepage = "https://github.com/mateusrdp/oxiguitar-wah"
+publish = false
+
+[lib]
+# An ordinary library for tests, and wah.oxp when built with
+# `--features oxp --crate-type cdylib` (build-oxp.sh).
+crate-type = ["lib"]
+
+[features]
+oxp = []
+
+[dependencies]
+# The SDK, from OxiGuitar's repository: interface 1.8 (the score's control
+# curves reach effects) is not released yet, so this is the commit of its
+# pull request (mateusrdp/oxiguitar#250's); the tag once it exists. Nothing
+# of OxiGuitar's is on crates.io. The filter is our own code (src/wah.rs):
+# no other library.
+oxiguitar-plugin = { git = "https://github.com/mateusrdp/oxiguitar", rev = "9cc665ac0abbdef2a30ba2ad1ed1438764317276" }
+
+[dev-dependencies]
+# The contract suite and the real-time checks (tests/contract.rs) run the
+# built .oxp file through OxiGuitar's own plugin host.
+oxiguitar-plugin-test = { git = "https://github.com/mateusrdp/oxiguitar", rev = "9cc665ac0abbdef2a30ba2ad1ed1438764317276" }
+oxiguitar-host = { git = "https://github.com/mateusrdp/oxiguitar", rev = "9cc665ac0abbdef2a30ba2ad1ed1438764317276" }
+
+# Plugins deny `unsafe` rather than forbid it: `export_plugin!` allows it on
+# the two attributes it generates, and nowhere else.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+unreachable_pub = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+dbg_macro = "warn"
+todo = "warn"
+
+[profile.release]
+# Small files. Keep the default `panic = "unwind"`: a panic is then caught
+# and reported as an error instead of closing OxiGuitar.
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+
+# Its own workspace, wherever the folder is copied.
+[workspace]

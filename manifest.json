@@ -1,0 +1,16 @@
+{
+  "interface": "1.8",
+  "id": "oxiguitar.wah",
+  "name": "Wah-wah",
+  "version": "0.0.0",
+  "description": "A wah-wah pedal on any track, rocked by the score's wah marks: a Cry Baby by default, each mark with its own curve and Q.",
+  "authors": ["Mateus Rocha de Paula", "The OxiGuitar contributors"],
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://github.com/mateusrdp/oxiguitar-wah",
+  "effects": [
+    { "id": "wah", "name": "Wah-wah" }
+  ],
+  "track_sections": [
+    { "id": "wah", "title": "Wah-wah" }
+  ]
+}
