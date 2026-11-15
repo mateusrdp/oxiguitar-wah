@@ -3,14 +3,21 @@
   "id": "oxiguitar.wah",
   "name": "Wah-wah",
   "version": "0.0.0",
-  "description": "A wah-wah pedal on any track, rocked by the score's wah marks: a Cry Baby by default, each mark with its own curve and Q.",
+  "description": "Wah-wah marks, written and played: the palette's wah tools with an editor for each mark's curve and Q, and a wah pedal (a Cry Baby by default) that the marks rock.",
   "authors": ["Mateus Rocha de Paula", "The OxiGuitar contributors"],
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/mateusrdp/oxiguitar-wah",
   "effects": [
-    { "id": "wah", "name": "Wah-wah" }
+    { "id": "wah", "name": "Wah-wah", "follows_score": true, "order": 100 }
   ],
   "track_sections": [
     { "id": "wah", "title": "Wah-wah" }
+  ],
+  "tools": [
+    { "id": "closed", "name": "Closed Wah-Wah", "description": "Puts a closed wah-wah mark on the caret's beat or the selected beats, and opens its editor.", "palette": { "section": "Effects", "symbol": "U+E5E5" } },
+    { "id": "open", "name": "Open Wah-Wah", "description": "Puts an open wah-wah mark on the caret's beat or the selected beats, and opens its editor.", "palette": { "section": "Effects", "symbol": "U+E5E7" } }
+  ],
+  "tabs": [
+    { "id": "editor", "title": "Wah-Wah", "area": "dialog" }
   ]
 }

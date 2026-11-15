@@ -20,18 +20,18 @@ crate-type = ["lib"]
 oxp = []
 
 [dependencies]
-# The SDK, from OxiGuitar's repository: interface 1.8 (the score's control
-# curves reach effects) is not released yet, so this is the commit of its
-# pull request (mateusrdp/oxiguitar#250's); the tag once it exists. Nothing
-# of OxiGuitar's is on crates.io. The filter is our own code (src/wah.rs):
-# no other library.
-oxiguitar-plugin = { git = "https://github.com/mateusrdp/oxiguitar", rev = "9cc665ac0abbdef2a30ba2ad1ed1438764317276" }
+# The SDK, from OxiGuitar's repository: interface 1.8 (palette tools,
+# dialogs, data on beats, effects that follow the score) is not released
+# yet, so this is the commit of its pull request (mateusrdp/oxiguitar#292);
+# the tag once it exists. Nothing of OxiGuitar's is on crates.io. The filter
+# is our own code (src/wah.rs): no other library.
+oxiguitar-plugin = { git = "https://github.com/mateusrdp/oxiguitar", rev = "c8ae48de4af224e36a18e2e0f5e9d9d9dbace1f7" }
 
 [dev-dependencies]
 # The contract suite and the real-time checks (tests/contract.rs) run the
 # built .oxp file through OxiGuitar's own plugin host.
-oxiguitar-plugin-test = { git = "https://github.com/mateusrdp/oxiguitar", rev = "9cc665ac0abbdef2a30ba2ad1ed1438764317276" }
-oxiguitar-host = { git = "https://github.com/mateusrdp/oxiguitar", rev = "9cc665ac0abbdef2a30ba2ad1ed1438764317276" }
+oxiguitar-plugin-test = { git = "https://github.com/mateusrdp/oxiguitar", rev = "c8ae48de4af224e36a18e2e0f5e9d9d9dbace1f7" }
+oxiguitar-host = { git = "https://github.com/mateusrdp/oxiguitar", rev = "c8ae48de4af224e36a18e2e0f5e9d9d9dbace1f7" }
 
 # Plugins deny `unsafe` rather than forbid it: `export_plugin!` allows it on
 # the two attributes it generates, and nowhere else.
