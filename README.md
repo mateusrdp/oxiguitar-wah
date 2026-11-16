@@ -41,11 +41,11 @@ The filter is one second-order resonance with a zero at 0 Hz, as in Julius O. Sm
 
 ## Install
 
-It needs an OxiGuitar with plugin interface 1.8 (mateusrdp/oxiguitar#292), which is not released yet; neither is this plugin. Once it is, every [release](https://github.com/mateusrdp/oxiguitar-wah/releases) will hold a zip per system (Linux x86_64 and ARM64, Windows x86_64 and ARM64, macOS), a `.deb`, an `.rpm` and a Flatpak for Linux, a per-user Windows installer, a macOS `.pkg`, and a `SHA256SUMS` file, as OxiGuitar's other plugins do.
+It needs OxiGuitar 0.20.0 or later (plugin interface 1.8). The plugin itself is not released yet; once it is, every [release](https://github.com/mateusrdp/oxiguitar-wah/releases) will hold a zip per system (Linux x86_64 and ARM64, Windows x86_64 and ARM64, macOS), a `.deb`, an `.rpm` and a Flatpak for Linux, a per-user Windows installer, a macOS `.pkg`, and a `SHA256SUMS` file, as OxiGuitar's other plugins do.
 
 ## Build and test
 
-Rust 1.99 or later from [rustup](https://rustup.rs). The plugin SDK comes from OxiGuitar's repository (a commit until the release with interface 1.8 has its tag); nothing of OxiGuitar's is on crates.io.
+Rust 1.99 or later from [rustup](https://rustup.rs). The plugin SDK comes from OxiGuitar's repository, at the tag `v0.20.0`; nothing of OxiGuitar's is on crates.io.
 
 ```sh
 cargo test          # unit tests (the pedal's response against the model's numbers, the curve, the editor), the contract suite on the built .oxp file, and the real-time checks
