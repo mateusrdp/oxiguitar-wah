@@ -41,7 +41,7 @@ The filter is one second-order resonance with a zero at 0 Hz, as in Julius O. Sm
 
 ## Install
 
-It needs OxiGuitar 0.20.0 or later (plugin interface 1.8). The plugin itself is not released yet; once it is, every [release](https://github.com/mateusrdp/oxiguitar-wah/releases) will hold a zip per system (Linux x86_64 and ARM64, Windows x86_64 and ARM64, macOS), a `.deb`, an `.rpm` and a Flatpak for Linux, a per-user Windows installer, a macOS `.pkg`, and a `SHA256SUMS` file, as OxiGuitar's other plugins do.
+Every [release](https://github.com/mateusrdp/oxiguitar-wah/releases) holds a zip per system (Linux x86_64 and ARM64, Windows x86_64 and ARM64, macOS), a `.deb`, an `.rpm` and a Flatpak for Linux, a per-user Windows installer (no administrator needed), a macOS `.pkg`, and a `SHA256SUMS` file. The OxiGuitar manual's [install page](https://mateusrdp.github.io/oxiguitar/installing.html) says which one to use and how to keep the plugin updated through your package manager. On Debian, Ubuntu and Fedora with OxiGuitar's package repository set up, the package is `oxiguitar-wah`. The plugin needs OxiGuitar 0.20.0 or later (plugin interface 1.8).
 
 ## Build and test
 
