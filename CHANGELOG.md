@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-16
+
 ### Added
 
 - The palette's **Closed Wah-Wah** and **Open Wah-Wah** (mateusrdp/oxiguitar#250,
