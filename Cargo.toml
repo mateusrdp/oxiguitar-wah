@@ -25,13 +25,13 @@ oxp = []
 # yet, so this is the commit of its pull request (mateusrdp/oxiguitar#292);
 # the tag once it exists. Nothing of OxiGuitar's is on crates.io. The filter
 # is our own code (src/wah.rs): no other library.
-oxiguitar-plugin = { git = "https://github.com/mateusrdp/oxiguitar", rev = "c8ae48de4af224e36a18e2e0f5e9d9d9dbace1f7" }
+oxiguitar-plugin = { git = "https://github.com/mateusrdp/oxiguitar", rev = "6b4589cad7cec58cc9fc99659a4cbd1b89e234ca" }
 
 [dev-dependencies]
 # The contract suite and the real-time checks (tests/contract.rs) run the
 # built .oxp file through OxiGuitar's own plugin host.
-oxiguitar-plugin-test = { git = "https://github.com/mateusrdp/oxiguitar", rev = "c8ae48de4af224e36a18e2e0f5e9d9d9dbace1f7" }
-oxiguitar-host = { git = "https://github.com/mateusrdp/oxiguitar", rev = "c8ae48de4af224e36a18e2e0f5e9d9d9dbace1f7" }
+oxiguitar-plugin-test = { git = "https://github.com/mateusrdp/oxiguitar", rev = "6b4589cad7cec58cc9fc99659a4cbd1b89e234ca" }
+oxiguitar-host = { git = "https://github.com/mateusrdp/oxiguitar", rev = "6b4589cad7cec58cc9fc99659a4cbd1b89e234ca" }
 
 # Plugins deny `unsafe` rather than forbid it: `export_plugin!` allows it on
 # the two attributes it generates, and nowhere else.
