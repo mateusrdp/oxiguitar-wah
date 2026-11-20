@@ -39,9 +39,13 @@ Everything here is interface 1.8, and a plugin of yours can do the same ([the pl
 
 The filter is one second-order resonance with a zero at 0 Hz, as in Julius O. Smith's ["Digital CryBaby"](https://ccrma.stanford.edu/realsimple/faust_strings/Digital_CryBaby_Faust.html) (*Making Virtual Electric Guitars and Associated Effects Using Faust*, CCRMA, Stanford), which fits a measured Cry Baby: with the pedal at `w` from 0 (heel) to 1 (toe), the resonance is at 450 · 2^(2.3 w) Hz, its Q is 2^(2 (1 − w) + 1) and its gain 0.1 · 4^w. The code is our own, written from those formulas (`src/wah.rs`), with no other library. A mark's Q scales the pedal's own Q, 4 being the Cry Baby's with the pedal half way.
 
+## Manual
+
+The manual is at <https://mateusrdp.github.io/oxiguitar-wah/>. Its source is in [docs/manual](docs/manual). It covers what the plugin is for, how it works, what it needs and how to install it.
+
 ## Install
 
-Every [release](https://github.com/mateusrdp/oxiguitar-wah/releases) holds a zip per system (Linux x86_64 and ARM64, Windows x86_64 and ARM64, macOS), a `.deb`, an `.rpm` and a Flatpak for Linux, a per-user Windows installer (no administrator needed), a macOS `.pkg`, and a `SHA256SUMS` file. The OxiGuitar manual's [install page](https://mateusrdp.github.io/oxiguitar/installing.html) says which one to use and how to keep the plugin updated through your package manager. On Debian, Ubuntu and Fedora with OxiGuitar's package repository set up, the package is `oxiguitar-wah`. The plugin needs OxiGuitar 0.20.0 or later (plugin interface 1.8).
+Every [release](https://github.com/mateusrdp/oxiguitar-wah/releases) holds a zip per system (Linux x86_64 and ARM64, Windows x86_64 and ARM64, macOS), a `.deb`, an `.rpm` and a Flatpak for Linux, a per-user Windows installer (no administrator needed), a macOS `.pkg`, and a `SHA256SUMS` file. The [manual's install page](https://mateusrdp.github.io/oxiguitar-wah/install.html) says which one to use and how to keep it updated. On Debian, Ubuntu and Fedora with OxiGuitar's package repository set up, the package is `oxiguitar-wah`. The plugin needs OxiGuitar 0.20.0 or later (plugin interface 1.8).
 
 ## Build and test
 
