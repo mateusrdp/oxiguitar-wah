@@ -2,6 +2,8 @@
 
 The wah-wah plugin for [OxiGuitar](https://github.com/mateusrdp/oxiguitar), a free, open-source guitar tablature and score viewer, editor and player for Windows, macOS and Linux. It writes and plays wah-wah marks, and all of it is the plugin's: OxiGuitar itself has no wah tool, editor or filter.
 
+In plain words: a wah-wah pedal sweeps a single resonant peak up and down as you rock it, so the guitar seems to say "wah". Tabs mark it with an "o" (open) and a "+" (closed); this plugin writes those marks, lets you draw how the pedal moves across a beat, and plays them through a model of a Dunlop Cry Baby. The [manual](https://mateusrdp.github.io/oxiguitar-wah/) shows how.
+
 ![The wah-wah editor: the mark, its Q and the pedal's curve across the beat](docs/images/editor.png)
 
 Hear it: [two bars of chords, the second with open and closed marks](docs/sounds/wah.mp3) (a plucked string of our own through the pedal; `cargo run --example sound -- wah.wav` makes it).
@@ -56,6 +58,10 @@ cargo test          # unit tests (the pedal's response against the model's numbe
 ./build-oxp.sh      # dist/wah-VERSION-SYSTEM-ARCH.oxp
 python3 scripts/test-all.py   # every test, as the manual's Testing page says
 ```
+
+## Credits
+
+The filter is our own code, written from Julius O. Smith's measured model of the Cry Baby in [*Making Virtual Electric Guitars and Associated Effects Using Faust*](https://ccrma.stanford.edu/realsimple/faust_strings/) (CCRMA, Stanford). Built on OxiGuitar's plugin SDK. Cry Baby is a trademark of Dunlop Manufacturing. The manual's [Credits](https://mateusrdp.github.io/oxiguitar-wah/credits.html) page lists every project with its authors and licence. Thank you to all of them.
 
 ## Licence
 
