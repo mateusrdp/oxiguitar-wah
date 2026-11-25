@@ -1,7 +1,7 @@
 [package]
 name = "oxiguitar-wah-plugin"
 description = "The OxiGuitar wah-wah plugin: a wah pedal on any track, rocked by the score's wah marks."
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 # Rust from rustup, raised only when something needs it (CONTRIBUTING.md).
 rust-version = "1.99"
@@ -24,13 +24,15 @@ oxp = []
 # first release with interface 1.8 (palette tools, dialogs, data on beats,
 # effects that follow the score). Nothing of OxiGuitar's is on crates.io.
 # The filter is our own code (src/wah.rs): no other library.
-oxiguitar-plugin = { git = "https://github.com/mateusrdp/oxiguitar", tag = "v0.20.0" }
+# Now at v0.23.0 (plugin interface 1.16; plugin files are tar archives,
+# mateusrdp/oxiguitar#347).
+oxiguitar-plugin = { git = "https://github.com/mateusrdp/oxiguitar", tag = "v0.23.0" }
 
 [dev-dependencies]
 # The contract suite and the real-time checks (tests/contract.rs) run the
 # built .oxp file through OxiGuitar's own plugin host.
-oxiguitar-plugin-test = { git = "https://github.com/mateusrdp/oxiguitar", tag = "v0.20.0" }
-oxiguitar-host = { git = "https://github.com/mateusrdp/oxiguitar", tag = "v0.20.0" }
+oxiguitar-plugin-test = { git = "https://github.com/mateusrdp/oxiguitar", tag = "v0.23.0" }
+oxiguitar-host = { git = "https://github.com/mateusrdp/oxiguitar", tag = "v0.23.0" }
 
 # Plugins deny `unsafe` rather than forbid it: `export_plugin!` allows it on
 # the two attributes it generates, and nowhere else.

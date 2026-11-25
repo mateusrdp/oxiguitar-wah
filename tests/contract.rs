@@ -42,7 +42,7 @@ fn the_pedal_runs_in_real_time() {
     let plugins = Plugins::discover(
         std::slice::from_ref(&scratch),
         SharedSettings::default(),
-        oxiguitar_host::display_system(),
+        oxiguitar_host::NO_DISPLAY,
         Arc::new(Unheard),
     );
     // The suite rocks the wah pedal during its calls (interface 1.8), so

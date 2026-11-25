@@ -1,0 +1,6 @@
+{
+  "repository": "mateusrdp/oxiguitar-wah",
+  "plugins": [
+    {"name": "wah", "package": "oxiguitar-wah-plugin", "library": "oxiguitar_wah_plugin"}
+  ]
+}
