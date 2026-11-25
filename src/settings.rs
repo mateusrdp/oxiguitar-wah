@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Mateus Rocha de Paula and the OxiGuitar contributors
 
-//! A track's pedal, kept per track beside the score (`FILE.oxg`, the track
-//! dialog's section, under `oxiguitar.wah`):
+//! A track's pedal, kept per track beside the score (`FILE.oxg`, the Track
+//! tab's section, under `oxiguitar.wah`):
 //!
 //! ```json
 //! {"on": true, "heel": 450, "range": 2.3}

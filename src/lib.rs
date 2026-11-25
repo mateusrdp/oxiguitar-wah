@@ -1,24 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Mateus Rocha de Paula and the OxiGuitar contributors
 
-//! OxiGuitar's wah-wah plugin (plugin interface 1.8; mateusrdp/oxiguitar#250
-//! and #293): everything about the wah but the mark's two signs on the
+//! OxiGuitar's wah-wah plugin (plugin interface 1.16; mateusrdp/oxiguitar#250,
+//! #293 and #346): everything about the wah but the mark's two signs on the
 //! page, which are the score's own (Guitar Pro writes them too).
 //!
 //! - `editor` is what the user sees: the palette's Closed and Open
-//!   Wah-Wah tools and the dialog they open, where a mark gets its curve
+//!   Wah-Wah tools and the window they open, where a mark gets its curve
 //!   and its Q.
-//! - `form` is the dialog's state and rules; `shape` what a mark keeps,
+//! - `form` is the window's state and rules; `shape` what a mark keeps,
 //!   on its beat, as this plugin's own data.
 //! - `curve` joins a track's marks, as the player plays them, into the
 //!   pedal's curve through the song.
 //! - `wah` is the pedal: Julius O. Smith's digital Cry Baby, our own code
 //!   from its formulas, no latency.
 //! - `settings` is a track's choice (on or off, the pedal's make), and
-//!   `section` shows it in the track dialog.
+//!   `section` shows it in the Track tab.
+//! - `ui/wah.slint` draws the window and the section.
 //!
 //! OxiGuitar knows none of this: it places the tools the manifest
-//! declares, shows the dialog, carries what the plugin keeps on beats and
+//! declares, shows the plugin's views, carries what the plugin keeps on beats and
 //! saves it beside the score, tells the effect its track's marked beats
 //! with the times they play, and says where the score is on every call.
 
@@ -26,7 +27,9 @@ use std::sync::Arc;
 
 use oxiguitar_plugin::audio::{PlayedBeat, PrepareEffect};
 use oxiguitar_plugin::score2::Wah as Mark;
-use oxiguitar_plugin::{Effect, Error, Host, Plugin, Processor, Tab, Tool, TrackSection, Update};
+use oxiguitar_plugin::{
+    Effect, Error, Host, Plugin, Processor, Tool, TrackView, Ui, Update, Value,
+};
 
 pub mod curve;
 pub mod editor;
@@ -42,7 +45,7 @@ pub const ID: &str = "oxiguitar.wah";
 /// The effect's id in the manifest.
 pub const EFFECT: &str = "wah";
 
-/// The track dialog's section's id in the manifest.
+/// The Track tab's section's id in the manifest.
 pub const SECTION: &str = "wah";
 
 /// The plugin.
@@ -51,6 +54,7 @@ pub struct WahPlugin {
     open: editor::MarkTool,
     closed: editor::MarkTool,
     editor: editor::Editor,
+    section: section::Section,
 }
 
 impl Plugin for WahPlugin {
@@ -68,15 +72,12 @@ impl Plugin for WahPlugin {
                 host: host.clone(),
                 shared,
             },
+            section: section::Section::new(host.clone()),
         })
     }
 
     fn effect(&self, id: &str) -> Option<&dyn Effect> {
         (id == EFFECT).then_some(self as &dyn Effect)
-    }
-
-    fn track_section(&self, id: &str) -> Option<&dyn TrackSection> {
-        (id == SECTION).then_some(&section::Section as &dyn TrackSection)
     }
 
     fn tool(&self, id: &str) -> Option<&dyn Tool> {
@@ -87,8 +88,51 @@ impl Plugin for WahPlugin {
         }
     }
 
-    fn tab(&self, id: &str) -> Option<&dyn Tab> {
-        (id == editor::DIALOG).then_some(&self.editor as &dyn Tab)
+    fn ui(&self) -> Option<&dyn Ui> {
+        Some(self)
+    }
+}
+
+/// The window and the section (`ui/wah.slint`).
+impl Ui for WahPlugin {
+    fn shown(&self, view: &str, track: Option<&TrackView>) -> Result<(), Error> {
+        match view {
+            SECTION => self.section.shown(track),
+            editor::DIALOG => self
+                .editor
+                .host
+                .set_view(view, editor::properties(&self.editor.shared)),
+            _ => Ok(()),
+        }
+    }
+
+    fn callback(&self, view: &str, callback: &str, args: Vec<Value>) -> Result<(), Error> {
+        match (view, callback) {
+            (SECTION, _) => self.section.callback(callback, &args),
+            (editor::DIALOG, "ok" | "cancel") => {
+                self.editor.finish(callback == "ok")?;
+                self.editor.host.close_view(view)
+            }
+            (editor::DIALOG, _) => {
+                if self.editor.on(callback, &args) {
+                    self.editor
+                        .host
+                        .set_view(view, editor::properties(&self.editor.shared))
+                } else {
+                    Ok(())
+                }
+            }
+            _ => Ok(()),
+        }
+    }
+
+    /// The window closed by the user (its close button, Escape) forgets
+    /// the mark, as Cancel does.
+    fn closed(&self, view: &str, _accepted: bool) -> Result<(), Error> {
+        match view {
+            editor::DIALOG => self.editor.finish(false),
+            _ => Ok(()),
+        }
     }
 }
 
@@ -264,15 +308,54 @@ mod tests {
     }
 
     #[test]
-    fn the_tools_and_the_dialog_are_the_manifest_s() {
+    fn the_tools_and_the_views_are_the_manifest_s() {
         let wah = plugin();
         assert!(wah.tool("open").is_some() && wah.tool("closed").is_some());
         assert!(wah.tool("other").is_none());
-        assert!(wah.tab(editor::DIALOG).is_some());
+        assert!(wah.ui().is_some());
         // With no score open a tool says so and opens nothing.
         assert_eq!(
             wah.tool("open").unwrap().run().unwrap(),
             "No score is open."
         );
+    }
+
+    fn component(name: &str) -> oxiguitar_plugin_test::UiComponent {
+        let file = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("ui/wah.slint");
+        let compiled = oxiguitar_plugin_test::compile_ui_file(&file).unwrap();
+        compiled
+            .components
+            .into_iter()
+            .find(|c| c.name == name)
+            .unwrap()
+    }
+
+    /// The file compiles as OxiGuitar compiles it, with every property and
+    /// callback the window and the section use.
+    #[test]
+    fn the_slint_file_has_what_the_views_set_and_hear() {
+        let window = component("WahWindow");
+        let shared = editor::Shared::default();
+        for (name, _) in editor::properties(&shared) {
+            assert!(window.properties.iter().any(|p| *p == name), "{name}");
+        }
+        for name in [
+            "kind-chosen",
+            "q-chosen",
+            "pressed",
+            "dragged",
+            "released",
+            "ok",
+            "cancel",
+        ] {
+            assert!(window.callbacks.iter().any(|c| c == name), "{name}");
+        }
+        let section = component("WahSection");
+        for (name, _) in section::properties(&Default::default()) {
+            assert!(section.properties.iter().any(|p| *p == name), "{name}");
+        }
+        for name in ["switched", "heel-slid", "sweep-slid", "cry-baby"] {
+            assert!(section.callbacks.iter().any(|c| c == name), "{name}");
+        }
     }
 }

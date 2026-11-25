@@ -5,7 +5,7 @@
 The plugin does three jobs through OxiGuitar's plugin interface:
 
 1. It adds two **tools** to the palette, which write the open or closed mark on the caret's beat or on the selected beats, as one Undo step.
-2. It draws the **editor**, a dialog with the mark, its Q and the pedal's curve.
+2. It draws the **editor**, a window with the mark, its Q and the pedal's curve, drawn in Slint (`ui/wah.slint`) as the Track tab's Wah-wah section is.
 3. It runs an **effect that follows the score**: OxiGuitar tells it every beat the track plays, with its marks, and the effect builds one curve for the pedal out of them. An open mark takes the pedal from heel to toe over the first half of its beat, a closed mark takes it back, and a mark with a curve of its own plays that. On beats with no mark the pedal is off and the track passes untouched.
 
 The effect runs before the amp and the equalizer, like a pedal in front of an amplifier, unless you move it in the Track tab.
