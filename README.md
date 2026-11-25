@@ -26,12 +26,13 @@ Hear it: [two bars of chords, the second with open and closed marks](docs/sounds
 
 ## How it uses OxiGuitar's plugin interface
 
-Everything here is interface 1.8, and a plugin of yours can do the same ([the plugin guide](https://github.com/mateusrdp/oxiguitar/tree/develop/docs/plugins/src)):
+Everything here is interface 1.16, and a plugin of yours can do the same ([the plugin guide](https://github.com/mateusrdp/oxiguitar/tree/develop/docs/plugins/src)):
 
 | What | How |
 | --- | --- |
 | The palette's two buttons | `palette` on each tool of `manifest.json`: the section and a symbol of the music font |
-| The editor | A tab whose area is `dialog` (`src/editor.rs`), opened by the tools with `Host::open_dialog`; widgets and a canvas, with OxiGuitar's OK and Cancel |
+| The editor | A window view, `WahWindow` in `ui/wah.slint` (`src/editor.rs`), opened by the tools with `Host::set_view` and `Host::show_view`: two combo boxes, the grid and curve as Slint paths, a touch area for dragging, and its own OK and Cancel |
+| The Track tab's section | A track view, `WahSection` in `ui/wah.slint` (`src/section.rs`), that keeps its values with `Host::set_track_settings` |
 | The caret's beat | `Host::selection` when a tool runs |
 | Writing the mark | `Host::score2` and `Host::apply`: the mark is `BeatExt::Wah`, the curve and Q `BeatExt::Plugin` |
 | Playing it | An effect with `follows_score`: `Effect::prepare_following` gets every beat the track plays, with its marks and data (`src/curve.rs` makes one curve of them), and `Processor::process_at` the score's time with each block |
@@ -47,11 +48,11 @@ The manual is at <https://mateusrdp.github.io/oxiguitar-wah/>. Its source is in 
 
 ## Install
 
-Every [release](https://github.com/mateusrdp/oxiguitar-wah/releases) holds a zip per system (Linux x86_64 and ARM64, Windows x86_64 and ARM64, macOS), a `.deb`, an `.rpm` and a Flatpak for Linux, a per-user Windows installer (no administrator needed), a macOS `.pkg`, and a `SHA256SUMS` file. The [manual's install page](https://mateusrdp.github.io/oxiguitar-wah/install.html) says which one to use and how to keep it updated. On Debian, Ubuntu and Fedora with OxiGuitar's package repository set up, the package is `oxiguitar-wah`. The plugin needs OxiGuitar 0.20.0 or later (plugin interface 1.8).
+Every [release](https://github.com/mateusrdp/oxiguitar-wah/releases) holds a zip per system (Linux x86_64 and ARM64, Windows x86_64 and ARM64, macOS), a `.deb`, an `.rpm` and a Flatpak for Linux, a per-user Windows installer (no administrator needed), a macOS `.pkg`, and a `SHA256SUMS` file. The [manual's install page](https://mateusrdp.github.io/oxiguitar-wah/install.html) says which one to use and how to keep it updated. On Debian, Ubuntu and Fedora with OxiGuitar's package repository set up, the package is `oxiguitar-wah`. The plugin needs OxiGuitar 0.23.0 or later (plugin interface 1.16).
 
 ## Build and test
 
-Rust 1.99 or later from [rustup](https://rustup.rs). The plugin SDK comes from OxiGuitar's repository, at the tag `v0.20.0`; nothing of OxiGuitar's is on crates.io.
+Rust 1.99 or later from [rustup](https://rustup.rs). The plugin SDK comes from OxiGuitar's repository, at the tag `v0.23.0`; nothing of OxiGuitar's is on crates.io.
 
 ```sh
 cargo test          # unit tests (the pedal's response against the model's numbers, the curve, the editor), the contract suite on the built .oxp file, and the real-time checks

@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **The Wah-Wah window and the Track tab's section are Slint views** (mateusrdp/oxiguitar#346): `ui/wah.slint` draws both, with the same mark, Sharpness, curve, Heel, Sweep and Cry Baby as before. The window has its own OK and Cancel; the grid and the curve are Slint paths, dragged with a touch area. The plugin no longer uses OxiGuitar's dialog tabs, widgets, canvas or track sections drawn by the core, which OxiGuitar 1.0 retires. Needs OxiGuitar 0.23.0 or later (interface 1.16).
+
 ## [0.2.0] - 2026-11-25
 
 ### Changed
