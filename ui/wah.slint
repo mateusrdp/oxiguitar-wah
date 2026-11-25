@@ -1,0 +1,248 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Mateus Rocha de Paula and the OxiGuitar contributors
+
+// The wah-wah plugin's views (plugin interface 1.16): the Wah-Wah window
+// the palette's tools open, where a mark gets its curve and its Q, and the
+// Track tab's section "Wah-wah". The plugin sets every property
+// (src/editor.rs, src/section.rs) and hears what the user does.
+
+import { Button, CheckBox, ComboBox, Palette, Slider } from "std-widgets.slint";
+
+// A point of the curve, in the drawing's pixels.
+export struct Spot {
+    x: float,
+    y: float,
+}
+
+component Choice {
+    in property <string> title;
+    in property <[string]> options;
+    in-out property <int> picked;
+    in property <bool> enabled: true;
+    callback chosen(int);
+    HorizontalLayout {
+        spacing: 8px;
+        Text {
+            text: root.title;
+            min-width: 72px;
+            vertical-alignment: center;
+        }
+        ComboBox {
+            model: root.options;
+            current-index <=> root.picked;
+            enabled: root.enabled;
+            selected => { root.chosen(self.current-index); }
+        }
+    }
+}
+
+export component WahWindow inherits Window {
+    title: "Wah-Wah";
+    in property <[string]> kinds;
+    in-out property <int> kind;
+    in property <[string]> qs;
+    in-out property <int> q;
+    in property <bool> can-pick-q;
+    // The drawing's size, and its lines as SVG path commands: the grid's
+    // thin and thick lines, and the curve.
+    in property <float> drawing-width: 404;
+    in property <float> drawing-height: 264;
+    in property <string> thin;
+    in property <string> thick;
+    in property <string> curve;
+    in property <[Spot]> points;
+    in property <Spot> toe;
+    in property <Spot> heel;
+    // "For the 3 selected beats.", or empty.
+    in property <string> beats;
+    callback kind-chosen(int);
+    callback q-chosen(int);
+    // The pointer pressed on the drawing, moved while pressed, and let go,
+    // in the drawing's pixels.
+    callback pressed(float, float);
+    callback dragged(float, float);
+    callback released();
+    callback ok();
+    callback cancel();
+
+    VerticalLayout {
+        padding: 12px;
+        spacing: 8px;
+        Choice {
+            title: "Mark";
+            options: root.kinds;
+            picked <=> root.kind;
+            chosen(i) => { root.kind-chosen(i); }
+        }
+        Choice {
+            title: "Sharpness";
+            options: root.qs;
+            picked <=> root.q;
+            enabled: root.can-pick-q;
+            chosen(i) => { root.q-chosen(i); }
+        }
+        HorizontalLayout {
+            alignment: start;
+            Rectangle {
+                width: root.drawing-width * 1px;
+                height: root.drawing-height * 1px;
+                Path {
+                    viewbox-width: root.drawing-width;
+                    viewbox-height: root.drawing-height;
+                    commands: root.thin;
+                    stroke: Palette.foreground.transparentize(70%);
+                    stroke-width: 0.5px;
+                }
+                Path {
+                    viewbox-width: root.drawing-width;
+                    viewbox-height: root.drawing-height;
+                    commands: root.thick;
+                    stroke: Palette.foreground.transparentize(50%);
+                    stroke-width: 1px;
+                }
+                Path {
+                    viewbox-width: root.drawing-width;
+                    viewbox-height: root.drawing-height;
+                    commands: root.curve;
+                    stroke: Palette.accent-background;
+                    stroke-width: 2px;
+                }
+                for p in root.points: Rectangle {
+                    x: (p.x - 4) * 1px;
+                    y: (p.y - 4) * 1px;
+                    width: 8px;
+                    height: 8px;
+                    background: Palette.accent-background;
+                }
+                Text {
+                    x: root.toe.x * 1px - self.width;
+                    y: root.toe.y * 1px - self.height / 2;
+                    text: "Toe";
+                    font-size: 11px;
+                    opacity: 0.7;
+                }
+                Text {
+                    x: root.heel.x * 1px - self.width;
+                    y: root.heel.y * 1px - self.height / 2;
+                    text: "Heel";
+                    font-size: 11px;
+                    opacity: 0.7;
+                }
+                TouchArea {
+                    pointer-event(e) => {
+                        if (e.button == PointerEventButton.left && e.kind == PointerEventKind.down) {
+                            root.pressed(self.mouse-x / 1px, self.mouse-y / 1px);
+                        } else if (e.button == PointerEventButton.left && e.kind == PointerEventKind.up) {
+                            root.released();
+                        }
+                    }
+                    moved => { root.dragged(self.mouse-x / 1px, self.mouse-y / 1px); }
+                }
+            }
+        }
+        Text {
+            text: "Drag the points: the pedal across the beat.";
+            opacity: 0.7;
+        }
+        if root.beats != "": Text {
+            text: root.beats;
+            opacity: 0.7;
+        }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 8px;
+            Button {
+                text: "OK";
+                primary: true;
+                clicked => { root.ok(); }
+            }
+            Button {
+                text: "Cancel";
+                clicked => { root.cancel(); }
+            }
+        }
+    }
+}
+
+component Level {
+    in property <string> title;
+    in-out property <float> value;
+    in property <float> minimum;
+    in property <float> maximum;
+    in property <string> shown;
+    in property <bool> enabled;
+    callback slid(float);
+    HorizontalLayout {
+        spacing: 8px;
+        Text {
+            text: root.title;
+            min-width: 56px;
+            vertical-alignment: center;
+        }
+        Slider {
+            minimum: root.minimum;
+            maximum: root.maximum;
+            enabled: root.enabled;
+            value <=> root.value;
+            released(v) => { root.slid(v); }
+        }
+        Text {
+            text: root.shown;
+            min-width: 140px;
+            vertical-alignment: center;
+            opacity: 0.7;
+        }
+    }
+}
+
+export component WahSection {
+    in-out property <bool> on;
+    in-out property <float> heel;
+    in property <float> heel-minimum;
+    in property <float> heel-maximum;
+    in property <string> heel-text;
+    in-out property <float> sweep;
+    in property <float> sweep-minimum;
+    in property <float> sweep-maximum;
+    in property <string> sweep-text;
+    in property <bool> can-reset;
+    callback switched(bool);
+    callback heel-slid(float);
+    callback sweep-slid(float);
+    callback cry-baby();
+
+    VerticalLayout {
+        spacing: 6px;
+        CheckBox {
+            text: "Play the score's wah-wah marks";
+            checked <=> root.on;
+            toggled => { root.switched(self.checked); }
+        }
+        Level {
+            title: "Heel";
+            value <=> root.heel;
+            minimum: root.heel-minimum;
+            maximum: root.heel-maximum;
+            shown: root.heel-text;
+            enabled: root.on;
+            slid(v) => { root.heel-slid(v); }
+        }
+        Level {
+            title: "Sweep";
+            value <=> root.sweep;
+            minimum: root.sweep-minimum;
+            maximum: root.sweep-maximum;
+            shown: root.sweep-text;
+            enabled: root.on;
+            slid(v) => { root.sweep-slid(v); }
+        }
+        HorizontalLayout {
+            alignment: start;
+            Button {
+                text: "Cry Baby";
+                enabled: root.can-reset;
+                clicked => { root.cry-baby(); }
+            }
+        }
+    }
+}

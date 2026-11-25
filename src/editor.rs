@@ -1,33 +1,31 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Mateus Rocha de Paula and the OxiGuitar contributors
 
-//! The palette's two tools and the wah-wah editor they open (plugin
-//! interface 1.8: palette tools and dialogs are a plugin's own).
+//! The palette's two tools and the wah-wah editor they open: the window
+//! `WahWindow` in `ui/wah.slint` (plugin interface 1.16).
 //!
 //! A tool looks at the beats the editor's selection names (the caret's
 //! beat, the selected beats, or every beat of the selected bars), opens
 //! the editor on the first one's mark, or on the mark it was asked for
-//! when that beat has none, and leaves the rest to the dialog. OK writes
+//! when that beat has none, and leaves the rest to the window. OK writes
 //! the mark and its shape on every one of those beats that has notes, as
 //! one change the user can undo.
 
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
-use oxiguitar_plugin::display::{Anchor, Font, Item, Paint, PathCmd, Point};
+use std::fmt::Write as _;
+
 use oxiguitar_plugin::score::BeatKind;
 use oxiguitar_plugin::score2::{Beat2, BeatExt, Score2, Wah};
-use oxiguitar_plugin::{
-    Canvas, Error, ErrorKind, Host, PointerKind, Row, Selection2, Tab, TabContent, TabEvent, Tool,
-    Widget,
-};
+use oxiguitar_plugin::{Error, ErrorKind, Host, Selection2, Tool, Value};
 
 use crate::form::{COLUMNS, Form, KINDS, ROWS, q_names};
 use crate::shape::Shape;
 
-/// The dialog's id in the manifest.
+/// The window's id in the manifest.
 pub const DIALOG: &str = "editor";
 
-/// The canvas: the grid with room for its side's words.
+/// The drawing: the grid with room for its side's words, in pixels.
 const WIDTH: f32 = 404.0;
 const HEIGHT: f32 = 264.0;
 /// The grid's top-left corner and its cells.
@@ -226,7 +224,11 @@ impl Tool for MarkTool {
         };
         let form = Form::open(mark_of(first), self.kind);
         self.shared.state().editing = Some((places, form));
-        if let Err(e) = self.host.open_dialog(DIALOG) {
+        let shown = self
+            .host
+            .set_view(DIALOG, properties(&self.shared))
+            .and_then(|()| self.host.show_view(DIALOG));
+        if let Err(e) = shown {
             self.shared.state().editing = None;
             return Err(e);
         }
@@ -234,7 +236,7 @@ impl Tool for MarkTool {
     }
 }
 
-/// The wah-wah editor: the dialog.
+/// The wah-wah editor: the window.
 #[derive(Debug)]
 pub struct Editor {
     /// The host.
@@ -243,149 +245,140 @@ pub struct Editor {
     pub shared: Arc<Shared>,
 }
 
-fn label(text: &str, muted: bool) -> Widget {
-    Widget::Label {
-        text: text.into(),
-        muted,
-    }
+fn x(col: f32) -> f32 {
+    LEFT + col * CELL_W
 }
 
-/// The grid and the curve, in the canvas's units.
-fn drawing(form: &Form) -> Vec<Item> {
-    let x = |col: f32| LEFT + col * CELL_W;
-    let y = |row: f32| TOP + (ROWS as f32 - row) * CELL_H;
+fn y(row: f32) -> f32 {
+    TOP + (ROWS as f32 - row) * CELL_H
+}
+
+fn spot(x: f32, y: f32) -> Value {
+    Value::Struct(vec![
+        ("x".into(), Value::Number(f64::from(x))),
+        ("y".into(), Value::Number(f64::from(y))),
+    ])
+}
+
+/// The grid's lines as SVG path commands: the thin ones, the thick ones
+/// (every third column, the heel, the middle and the toe).
+fn grid() -> (String, String) {
+    let (mut thin, mut thick) = (String::new(), String::new());
     let (right, bottom) = (x(COLUMNS as f32), y(0.0));
-    let mut items = Vec::new();
     for col in 0..=COLUMNS {
-        items.push(Item::Line {
-            from: Point::new(x(col as f32), TOP),
-            to: Point::new(x(col as f32), bottom),
-            width: if col % 3 == 0 { 1.0 } else { 0.5 },
-            paint: Paint::Muted,
-        });
+        let to = if col % 3 == 0 { &mut thick } else { &mut thin };
+        let at = x(col as f32);
+        let _ = write!(to, "M {at} {TOP} L {at} {bottom} ");
     }
     for row in 0..=ROWS {
-        items.push(Item::Line {
-            from: Point::new(LEFT, y(row as f32)),
-            to: Point::new(right, y(row as f32)),
-            width: if row % 5 == 0 { 1.0 } else { 0.5 },
-            paint: Paint::Muted,
-        });
+        let to = if row % 5 == 0 { &mut thick } else { &mut thin };
+        let at = y(row as f32);
+        let _ = write!(to, "M {LEFT} {at} L {right} {at} ");
     }
-    for (text, row) in [("Toe", ROWS), ("Heel", 0)] {
-        items.push(Item::Text {
-            text: text.into(),
-            at: Point::new(LEFT - 6.0, y(row as f32) + 4.0),
-            size: 11.0,
-            font: Font::Sans,
-            anchor: Anchor::End,
-            paint: Paint::Muted,
-        });
-    }
-    let at = |p: &crate::form::Point| Point::new(x(p.col as f32), y(p.row as f32));
-    if let Some(first) = form.points.first() {
-        let mut cmds = vec![PathCmd::MoveTo(at(first))];
-        cmds.extend(form.points.iter().skip(1).map(|p| PathCmd::LineTo(at(p))));
-        items.push(Item::Path {
-            cmds,
-            fill: None,
-            stroke: Some((2.0, Paint::Accent)),
-        });
-    }
-    for p in &form.points {
-        let c = at(p);
-        items.push(Item::Rect {
-            at: Point::new(c.x - 4.0, c.y - 4.0),
-            width: 8.0,
-            height: 8.0,
-            paint: Paint::Accent,
-        });
-    }
-    items
+    (thin.trim_end().into(), thick.trim_end().into())
 }
 
-impl Tab for Editor {
-    fn content(&self) -> TabContent {
-        let state = self.shared.state();
-        let Some((places, form)) = &state.editing else {
-            return TabContent {
-                rows: vec![Row {
-                    widgets: vec![label("Pick a wah-wah tool in the palette.", true)],
-                }],
-            };
-        };
-        let mut rows = vec![
-            Row {
-                widgets: vec![
-                    label("Mark", false),
-                    Widget::Choice {
-                        id: "kind".into(),
-                        options: KINDS.iter().map(|k| (*k).to_owned()).collect(),
-                        selected: form.kind as u32,
-                        enabled: true,
-                    },
-                ],
-            },
-            Row {
-                widgets: vec![
-                    label("Sharpness", false),
-                    Widget::Choice {
-                        id: "q".into(),
-                        options: q_names(),
-                        selected: form.q as u32,
-                        enabled: form.kind != 0,
-                    },
-                ],
-            },
-            Row {
-                widgets: vec![Widget::Canvas(Canvas {
-                    id: "curve".into(),
-                    width: WIDTH,
-                    height: HEIGHT,
-                    items: drawing(form),
-                })],
-            },
-            Row {
-                widgets: vec![label("Drag the points: the pedal across the beat.", true)],
-            },
-        ];
-        if places.len() > 1 {
-            rows.push(Row {
-                widgets: vec![label(
-                    &format!("For the {} selected beats.", places.len()),
-                    true,
-                )],
-            });
-        }
-        TabContent { rows }
+/// What the window shows: the form being edited, or nothing to edit.
+pub fn properties(shared: &Shared) -> Vec<(String, Value)> {
+    let state = shared.state();
+    let (count, form) = match &state.editing {
+        Some((places, form)) => (places.len(), form.clone()),
+        None => (0, Form::open(None, Wah::Open)),
+    };
+    let strings = |v: Vec<String>| Value::List(v.into_iter().map(Value::String).collect());
+    let at = |p: &crate::form::Point| (x(p.col as f32), y(p.row as f32));
+    let mut curve = String::new();
+    for (i, p) in form.points.iter().enumerate() {
+        let (px, py) = at(p);
+        let _ = write!(curve, "{} {px} {py} ", if i == 0 { "M" } else { "L" });
     }
+    let (thin, thick) = grid();
+    vec![
+        (
+            "kinds".into(),
+            strings(KINDS.iter().map(|k| (*k).to_owned()).collect()),
+        ),
+        ("kind".into(), Value::Number(form.kind as f64)),
+        ("qs".into(), strings(q_names())),
+        ("q".into(), Value::Number(form.q as f64)),
+        ("can-pick-q".into(), Value::Bool(form.kind != 0)),
+        ("drawing-width".into(), Value::Number(f64::from(WIDTH))),
+        ("drawing-height".into(), Value::Number(f64::from(HEIGHT))),
+        ("thin".into(), Value::String(thin)),
+        ("thick".into(), Value::String(thick)),
+        ("curve".into(), Value::String(curve.trim_end().into())),
+        (
+            "points".into(),
+            Value::List(
+                form.points
+                    .iter()
+                    .map(|p| {
+                        let (px, py) = at(p);
+                        spot(px, py)
+                    })
+                    .collect(),
+            ),
+        ),
+        ("toe".into(), spot(LEFT - 6.0, y(ROWS as f32))),
+        ("heel".into(), spot(LEFT - 6.0, y(0.0))),
+        (
+            "beats".into(),
+            Value::String(if count > 1 {
+                format!("For the {count} selected beats.")
+            } else {
+                String::new()
+            }),
+        ),
+    ]
+}
 
-    fn on(&self, widget: &str, event: TabEvent) -> Result<(), Error> {
+fn number(args: &[Value], i: usize) -> Option<f32> {
+    match args.get(i) {
+        Some(Value::Number(n)) if n.is_finite() => Some(*n as f32),
+        _ => None,
+    }
+}
+
+impl Editor {
+    /// A callback of the window but OK and Cancel: the form follows the
+    /// choices and the pointer. `false` when nothing changed that shows.
+    pub fn on(&self, callback: &str, args: &[Value]) -> bool {
         let mut state = self.shared.state();
         let Some((_, form)) = &mut state.editing else {
-            return Ok(());
+            return false;
         };
-        match (widget, event) {
-            ("kind", TabEvent::Chosen(i)) => form.pick_kind(i as usize),
-            ("q", TabEvent::Chosen(i)) => form.pick_q(i as usize),
-            ("curve", TabEvent::Pointer(p)) => {
-                let col = (p.at.x - LEFT) / CELL_W;
-                let row = ROWS as f32 - (p.at.y - TOP) / CELL_H;
-                match p.kind {
-                    PointerKind::Down => form.press(col, row),
-                    PointerKind::Drag => form.drag(col, row),
-                    PointerKind::Up => form.release(),
-                    // Moving over the curve without a button, and leaving
-                    // it (interface 1.14), change nothing.
-                    PointerKind::Move | PointerKind::Leave => {}
+        let index = number(args, 0).filter(|i| *i >= 0.0).map(|i| i as usize);
+        let grid = || {
+            let (px, py) = (number(args, 0)?, number(args, 1)?);
+            Some(((px - LEFT) / CELL_W, ROWS as f32 - (py - TOP) / CELL_H))
+        };
+        let before = form.clone();
+        match callback {
+            "kind-chosen" => index.into_iter().for_each(|i| form.pick_kind(i)),
+            "q-chosen" => index.into_iter().for_each(|i| form.pick_q(i)),
+            "pressed" => {
+                if let Some((col, row)) = grid() {
+                    form.press(col, row);
+                }
+                return false;
+            }
+            "dragged" => {
+                if let Some((col, row)) = grid() {
+                    form.drag(col, row);
                 }
             }
-            _ => {}
+            "released" => {
+                form.release();
+                return false;
+            }
+            _ => return false,
         }
-        Ok(())
+        *form != before
     }
 
-    fn closed(&self, ok: bool) -> Result<(), Error> {
+    /// OK (`ok`) writes the mark on the beats the window is for, as one
+    /// change; Cancel, or the window closed, forgets it.
+    pub fn finish(&self, ok: bool) -> Result<(), Error> {
         let Some((places, form)) = self.shared.state().editing.take() else {
             return Ok(());
         };
@@ -532,46 +525,64 @@ mod tests {
         assert!(matches!(beat.ext[0], BeatExt::Slur));
     }
 
+    fn get<'a>(p: &'a [(String, Value)], name: &str) -> &'a Value {
+        &p.iter().find(|(n, _)| n == name).unwrap().1
+    }
+
     #[test]
-    fn the_editor_shows_the_form_and_follows_its_widgets_and_the_pointer() {
+    fn the_editor_shows_the_form_and_follows_its_choices_and_the_pointer() {
         let shared = Arc::new(Shared::default());
         let editor = Editor {
             host: Host::detached(),
             shared: shared.clone(),
         };
-        // Not opened by a tool: a line of words, which can be shown.
-        assert_eq!(editor.content().problems(), Vec::<String>::new());
-        shared.state().editing = Some((vec![[0, 0, 0, 0, 0]], Form::open(None, Wah::Open)));
-        let content = editor.content();
-        assert_eq!(content.problems(), Vec::<String>::new());
-        assert!(matches!(
-            &content.rows[0].widgets[1],
-            Widget::Choice { selected: 1, .. }
+        // Not opened by a tool: nothing changes, and it can be shown.
+        assert!(!editor.on("q-chosen", &[Value::Number(5.0)]));
+        assert_eq!(
+            get(&properties(&shared), "beats"),
+            &Value::String(String::new())
+        );
+        shared.state().editing = Some((
+            vec![[0, 0, 0, 0, 0], [0, 0, 0, 0, 2]],
+            Form::open(None, Wah::Open),
         ));
+        let p = properties(&shared);
+        assert_eq!(get(&p, "kind"), &Value::Number(1.0));
+        assert_eq!(get(&p, "can-pick-q"), &Value::Bool(true));
+        assert_eq!(
+            get(&p, "beats"),
+            &Value::String("For the 2 selected beats.".into())
+        );
+        // The curve from the heel to the toe, and its four points.
+        assert_eq!(
+            get(&p, "curve"),
+            &Value::String("M 38 252 L 218 12 L 218 12 L 398 12".into())
+        );
+        assert!(matches!(get(&p, "points"), Value::List(l) if l.len() == 4));
+        assert!(matches!(get(&p, "thick"), Value::String(t) if t.starts_with("M 38 12 L 38 252")));
         // The end of the curve dragged from the toe to half way.
-        let pointer = |kind, col: f32, row: f32| {
-            TabEvent::Pointer(oxiguitar_plugin::Pointer {
-                kind,
-                at: Point::new(LEFT + col * CELL_W, TOP + (ROWS as f32 - row) * CELL_H),
-                button: oxiguitar_plugin::PointerButton::Primary,
-            })
+        let at = |col: f32, row: f32| {
+            [
+                Value::Number(f64::from(x(col))),
+                Value::Number(f64::from(y(row))),
+            ]
         };
-        editor
-            .on("curve", pointer(PointerKind::Down, 12.0, 10.0))
-            .unwrap();
-        editor
-            .on("curve", pointer(PointerKind::Drag, 12.0, 5.0))
-            .unwrap();
-        editor
-            .on("curve", pointer(PointerKind::Up, 12.0, 5.0))
-            .unwrap();
-        editor.on("q", TabEvent::Chosen(5)).unwrap();
+        assert!(!editor.on("pressed", &at(12.0, 10.0)));
+        assert!(editor.on("dragged", &at(12.0, 5.0)));
+        assert!(!editor.on("dragged", &at(12.0, 5.1)));
+        assert!(!editor.on("released", &[]));
+        assert!(editor.on("q-chosen", &[Value::Number(5.0)]));
         let made = shared.state().editing.as_ref().unwrap().1.mark().unwrap();
         let shape = made.1.unwrap();
         assert_eq!(shape.q, 6.0);
         assert_eq!(shape.points.last(), Some(&(1.0, 50.0)));
+        // No wah-wah: no curve, and no Q to pick.
+        assert!(editor.on("kind-chosen", &[Value::Number(0.0)]));
+        let p = properties(&shared);
+        assert_eq!(get(&p, "curve"), &Value::String(String::new()));
+        assert_eq!(get(&p, "can-pick-q"), &Value::Bool(false));
         // Cancel forgets it and changes nothing.
-        editor.closed(false).unwrap();
+        editor.finish(false).unwrap();
         assert!(shared.state().editing.is_none());
     }
 }
