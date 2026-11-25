@@ -2,7 +2,7 @@
   "interface": "1.16",
   "id": "oxiguitar.wah",
   "name": "Wah-wah",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Wah-wah marks, written and played: the palette's wah tools with an editor for each mark's curve and Q, and a wah pedal (a Cry Baby by default) that the marks rock.",
   "authors": ["Mateus Rocha de Paula", "The OxiGuitar contributors"],
   "license": "GPL-3.0-or-later",
