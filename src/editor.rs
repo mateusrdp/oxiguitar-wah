@@ -375,6 +375,9 @@ impl Tab for Editor {
                     PointerKind::Down => form.press(col, row),
                     PointerKind::Drag => form.drag(col, row),
                     PointerKind::Up => form.release(),
+                    // Moving over the curve without a button, and leaving
+                    // it (interface 1.14), change nothing.
+                    PointerKind::Move | PointerKind::Leave => {}
                 }
             }
             _ => {}
