@@ -337,7 +337,7 @@ mod tests {
         let window = component("WahWindow");
         let shared = editor::Shared::default();
         for (name, _) in editor::properties(&shared) {
-            assert!(window.properties.iter().any(|p| *p == name), "{name}");
+            assert!(window.properties.contains(&name), "{name}");
         }
         for name in [
             "kind-chosen",
@@ -352,7 +352,7 @@ mod tests {
         }
         let section = component("WahSection");
         for (name, _) in section::properties(&Default::default()) {
-            assert!(section.properties.iter().any(|p| *p == name), "{name}");
+            assert!(section.properties.contains(&name), "{name}");
         }
         for name in ["switched", "heel-slid", "sweep-slid", "cry-baby"] {
             assert!(section.callbacks.iter().any(|c| c == name), "{name}");
